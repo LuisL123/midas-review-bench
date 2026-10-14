@@ -2644,7 +2644,11 @@ class ArrowExtensionArray(
     def _dt_seconds(self) -> Self:
         return type(self)(
             pa.array(
-                self._to_timedeltaarray().seconds, from_pandas=True, type=pa.int32()
+                [
+                    td.components.seconds if td is not NaT else None
+                    for td in self._to_timedeltaarray()
+                ],
+                type=pa.int32(),
             )
         )
 
@@ -2664,8 +2668,10 @@ class ArrowExtensionArray(
     def _dt_microseconds(self) -> Self:
         return type(self)(
             pa.array(
-                self._to_timedeltaarray().microseconds,
-                from_pandas=True,
+                [
+                    td.components.microseconds if td is not NaT else None
+                    for td in self._to_timedeltaarray()
+                ],
                 type=pa.int32(),
             )
         )
@@ -2674,7 +2680,11 @@ class ArrowExtensionArray(
     def _dt_nanoseconds(self) -> Self:
         return type(self)(
             pa.array(
-                self._to_timedeltaarray().nanoseconds, from_pandas=True, type=pa.int32()
+                [
+                    td.components.nanoseconds if td is not NaT else None
+                    for td in self._to_timedeltaarray()
+                ],
+                type=pa.int32(),
             )
         )
 
