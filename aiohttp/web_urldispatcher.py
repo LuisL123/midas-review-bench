@@ -716,13 +716,20 @@ class PrefixedSubAppResource(PrefixResource):
     def __init__(self, prefix: str, app: "Application") -> None:
         super().__init__(prefix)
         self._app = app
-        for resource in app.router.resources():
-            resource.add_prefix(prefix)
+        self._add_prefix_to_resources(prefix)
 
     def add_prefix(self, prefix: str) -> None:
         super().add_prefix(prefix)
-        for resource in self._app.router.resources():
+        self._add_prefix_to_resources(prefix)
+
+    def _add_prefix_to_resources(self, prefix: str) -> None:
+        router = self._app.router
+        for resource in router.resources():
+            # Since the canonical path of a resource is about
+            # to change, we need to unindex it and then reindex
+            router.unindex_resource(resource)
             resource.add_prefix(prefix)
+            router.index_resource(resource)
 
     def url_for(self, *args: str, **kwargs: str) -> URL:
         raise RuntimeError(".url_for() is not supported " "by sub-application root")
@@ -979,8 +986,23 @@ class UrlDispatcher(AbstractRouter, Mapping[str, AbstractResource]):
         super().__init__()
         self._resources: List[AbstractResource] = []
         self._named_resources: Dict[str, AbstractResource] = {}
+        self._resource_index: dict[str, list[AbstractResource]] = {}
 
     async def resolve(self, request: Request) -> UrlMappingMatchInfo:
+        url_parts = request.rel_url.raw_parts
+        resource_index = self._resource_index
+        # Walk the url parts looking for candidates
+        for i in range(len(url_parts), 0, -1):
+            url_part = "/" + "/".join(url_parts[1:i])
+            if (resource_candidates := resource_index.get(url_part)) is not None:
+                for candidate in resource_candidates:
+                    if (
+                        match_dict := (await candidate.resolve(request))[0]
+                    ) is not None:
+                        return match_dict
+
+        # We didn't find any candidates, so we fallback to a linear search
+
         method = request.method
         allowed_methods: Set[str] = set()
 
@@ -1049,6 +1071,26 @@ class UrlDispatcher(AbstractRouter, Mapping[str, AbstractResource]):
                 )
             self._named_resources[name] = resource
         self._resources.append(resource)
+        self.index_resource(resource)
+
+    def _get_resource_index_key(self, resource: AbstractResource) -> str:
+        """Return a key to index the resource in the resource index."""
+        canonical = resource.canonical
+        if "{" in canonical:  # strip at the first { to allow for variables
+            return canonical.partition("{")[0].rstrip("/") or "/"
+        return canonical
+
+    def index_resource(self, resource: AbstractResource) -> None:
+        """Add a resource to the resource index."""
+        resource_key = self._get_resource_index_key(resource)
+        # There may be multiple resources for a canonical path
+        # so we use a list to avoid falling back to a full linear search
+        self._resource_index.setdefault(resource_key, []).append(resource)
+
+    def unindex_resource(self, resource: AbstractResource) -> None:
+        """Remove a resource from the resource index."""
+        resource_key = self._get_resource_index_key(resource)
+        self._resource_index[resource_key].remove(resource)
 
     def add_resource(self, path: str, *, name: Optional[str] = None) -> Resource:
         if path and not path.startswith("/"):
