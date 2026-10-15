@@ -967,6 +967,13 @@ def do_map(*args, **kwargs):
 
         Users on this page: {{ users|map(attribute='username')|join(', ') }}
 
+    If the list of objects does not contain the given attribute
+    you can specify a default value to be returned.
+
+    .. sourcecode:: jinja
+
+        Users on this page: {{ users|map(attribute='username', default='foobar')|join(', ') }}
+
     Alternatively you can let it invoke a filter by passing the name of the
     filter and the arguments afterwards.  A good example would be applying a
     text conversion filter on a sequence:
@@ -977,10 +984,17 @@ def do_map(*args, **kwargs):
 
     .. versionadded:: 2.7
     """
+    try:
+        default = kwargs['default']
+    except KeyError:
+        default = ''
     seq, func = prepare_map(args, kwargs)
     if seq:
         for item in seq:
-            yield func(item)
+            if func(item):
+                yield func(item)
+            else:
+                yield default
 
 
 @contextfilter
@@ -1104,6 +1118,8 @@ def prepare_map(args, kwargs):
 
     if len(args) == 2 and 'attribute' in kwargs:
         attribute = kwargs.pop('attribute')
+        if 'default' in kwargs:
+            kwargs.pop('default')
         if kwargs:
             raise FilterArgumentError('Unexpected keyword argument %r' %
                 next(iter(kwargs)))
