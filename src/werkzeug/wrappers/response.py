@@ -2,6 +2,7 @@ from ..utils import cached_property
 from .auth import WWWAuthenticateMixin
 from .base_response import BaseResponse
 from .common_descriptors import CommonResponseDescriptorsMixin
+from .cors import ResponseCORSMixin
 from .etag import ETagResponseMixin
 
 
@@ -68,6 +69,7 @@ class Response(
     ResponseStreamMixin,
     CommonResponseDescriptorsMixin,
     WWWAuthenticateMixin,
+    ResponseCORSMixin,
 ):
     """Full featured response object implementing the following mixins:
 
@@ -75,4 +77,6 @@ class Response(
     - :class:`ResponseStreamMixin` to add support for the `stream` property
     - :class:`CommonResponseDescriptorsMixin` for various HTTP descriptors
     - :class:`WWWAuthenticateMixin` for HTTP authentication support
+    - :class:`ResponseCORSMixin` for Cross Origin Resource Sharing
+      headers
     """
