@@ -771,6 +771,24 @@ it("allows for mixed property value types", () => {
 	})
 })
 
+it("allows higher order type inference", () => {
+	function _test<A>() {
+		type S = {prop: A | undefined}
+		produce(
+			draft => {
+				draft.prop = undefined
+			},
+			{prop: undefined} as S
+		)
+	}
+})
+
+it("supports tuples with spread", () => {
+	type State = [boolean, ...number[]]
+	const foo = (x: State) => x
+	produce<State>(x => foo(x))
+})
+
 it("#877 - produce with typed state generic requires initial state", () => {
 	const reducerNoInitial = produce<{count: number}, [{type: "inc"}]>(
 		(draft, action: {type: "inc"}) => {
