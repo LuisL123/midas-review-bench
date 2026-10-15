@@ -2,6 +2,7 @@ from .accept import AcceptMixin
 from .auth import AuthorizationMixin
 from .base_request import BaseRequest
 from .common_descriptors import CommonRequestDescriptorsMixin
+from .cors import RequestCORSMixin
 from .etag import ETagRequestMixin
 from .user_agent import UserAgentMixin
 
@@ -13,6 +14,7 @@ class Request(
     UserAgentMixin,
     AuthorizationMixin,
     CommonRequestDescriptorsMixin,
+    RequestCORSMixin,
 ):
     """Full featured request object implementing the following mixins:
 
@@ -21,6 +23,9 @@ class Request(
     - :class:`UserAgentMixin` for user agent introspection
     - :class:`AuthorizationMixin` for http auth handling
     - :class:`CommonRequestDescriptorsMixin` for common headers
+    - :class:`RequestCORSMixin` for Cross Origin Resource Sharing
+      headers
+
     """
 
 
