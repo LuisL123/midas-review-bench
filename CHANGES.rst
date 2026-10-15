@@ -16,9 +16,11 @@ unreleased
 - The ``map`` filter in async mode now automatically awaits
 - Added a new ``ChainableUndefined`` class to support getitem
   and getattr on an undefined object. (`#977`_)
+- Added default param for map filter. (`#557`_)
 
 .. _#765: https://github.com/pallets/jinja/issues/765
 .. _#977: https://github.com/pallets/jinja/issues/977
+.. _#557: https://github.com/pallets/jinja/issues/557
 
 
 Version 2.10.1
